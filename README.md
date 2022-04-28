@@ -33,3 +33,43 @@ For all the packets with [DAT] flag is set to 0, the payload must be filled with
 RUSHB server is capable of checksum. During the initial [GET], clients can negotiate requests for checksum. This is done using [CHK] for checksum in the very first [GET] packet. The first [DAT] from the server will indicate if negotiation was successful by setting the corresponding [CHK] flag. Once negotiated, these options are valid for all packets until close the connection with that client. [ENC] is encryption flag. In this assignment, you do not have to implement [ENC], thus this flag can be left as 0.
 
 RUSHB checksum uses the standard Internet checksum on the payload only. As per the RFC, the checksum field is the 16-bit one's complement of the one's complement addition of all 16-bit words of the payload (see example below). Once [CHK] is negotiated, all packets that have invalid checksums are considered corrupt.
+
+# Test Guide
+## I. RUSHB Sample Client:
+This is a sample of a client can be used to debug with your RUSHBSvr.  
+
+**To use the client, please unzip and put your RUSHBSvr program into the directory (or folder) RUSHB. You would need to run your server first before running the client.  **
+
+Usage: python3 RUSHBSampleClient.py client_port server_port [-v verbose] [-m mode] [-o output]  
+
+For example, if you want to run your client on port 11111, your server port number is assigned at 54376, you want to see the payload sent or received, with associated timeline:  
+python3 RUSHBSampleClient.py 11111 54376 -v 3 -m SIMPLE  
+
+There are some behaviours mode you can use with [-m mode]:  
+* SIMPLE = [Send GET, ... work normally until the rest of the packets]
+* NAK = [Send GET, Send NAK, ... work normally until the rest of the packets]
+* MULTI_NAK = [Send GET, Send NAK, Send NAK, Send NAK, ... work normally until the rest of the packets]
+* TIMEOUT = [Send GET, Drop the DAT received, ... work normally until the rest of the packets]
+* MULTI_TIMEOUT = [Send GET, Drop the DAT received, Send NAK, Drop the DAT received, ... work normally until the rest of the packets]
+* INVALID_SEQ = [Send GET, Send packet with an invalid seq#, ... work normally until the rest of the packets]
+* INVALID_ACK = [Send GET, Send packet with an invalid ack#, ... work normally until the rest of the packets]
+* INVALID_FLAGS = [Send GET, Send packet with an invalid flag#, ... work normally until the rest of the packets]
+* CHECKSUM = [Send GET with CHK, ... work normally until the rest of the packets]
+* INVALID_CHECKSUM_VAL = [Send GET with CHK but use faulty checksum value, ... work normally until the rest of the packets]
+* INVALID_CHECKSUM_FLAG = [Send GET with CHK, Send packet with CHK not set, ... work normally until the rest of the packets]
+
+## II. RUSHB Sample Test:
+This is a very basic sample test suite your RUSHBSvr.  
+
+It does nothing more than check the client program's output is correct and isn't a full indication that your server program is working (in particular, we will be testing a much larger set of invalid packets in the marking tests, as well as compare if file received succesfully).  
+
+**To use the test suit, please unzip and put your RUSHBSvr into the directory (or folder) RUSHB. You would NOT need to run your server first before running the test.**  
+
+Usage: python3 RUSHBSampleTest.py mode  
+
+Where mode is one of the mode above in the client.  
+
+For example, if you want to run the test suit on CHECKSUM mode:  
+python3 RUSHBSampleTest.py CHECKSUM   
+
+## Note: Please rename your file with RUSHBSvr.py
