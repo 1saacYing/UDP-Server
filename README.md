@@ -18,3 +18,18 @@ When the ACK flag (see Figure 3: Flags structure) is set, the acknowledgement nu
 ![image](https://user-images.githubusercontent.com/91719529/165701206-79a60cd1-412a-4a6b-825e-9186257fb956.png)
 
 The following scenario describes a simple RUSHB communication session. The square brackets denote the flags set in each step (e.g., [FIN/ACK] denotes the FIN and ACK flags having the value 1 and the rest having the value 0). Note that RUSHB, unlike TCP, is not connection-oriented. There is no handshake to initialise the connection, but there is one to close the connection.
+
+### Scenario A (simple communication):
+1. The client sends a request [GET] to the server. The sequence number of this packet is 1.
+2. The data section (ASCII payload) of this packet contains the name of a resource (e.g. file.txt).
+3. The server receives [GET] message, then transmits the requested resource to the client over(possibly) multiple [DAT] packets. Remember, RUSHB protocol is a HTTP-like stop-and-wait protocol. The first packet from the server has a sequence number of 1.
+4. The client acknowledges by sending an [DAT/ACK] packet to each received data packet. TheAcknowledgement Number of each packet is the Sequence Number of the packet beingacknowledged.
+5. After receiving the last acknowledgement [DAT/ACK] from the client, the server sends [FIN]message to end the connection.
+6. The client receives [FIN] message from the server, then sends back [FIN/ACK] to the server.
+7. After receiving the last acknowledgement [FIN/ACK] from the client, the server send[FIN/ACK] again to the client and close the connection.
+
+For all the packets with [DAT] flag is set to 0, the payload must be filled with all 0s bit only. Please note that it is just a simple example of RUSHB protocol; the server also needs to deal with optimised data flow control and multiple clients (that will be described later).
+
+RUSHB server is capable of checksum. During the initial [GET], clients can negotiate requests for checksum. This is done using [CHK] for checksum in the very first [GET] packet. The first [DAT] from the server will indicate if negotiation was successful by setting the corresponding [CHK] flag. Once negotiated, these options are valid for all packets until close the connection with that client. [ENC] is encryption flag. In this assignment, you do not have to implement [ENC], thus this flag can be left as 0.
+
+RUSHB checksum uses the standard Internet checksum on the payload only. As per the RFC, the checksum field is the 16-bit one's complement of the one's complement addition of all 16-bit words of the payload (see example below). Once [CHK] is negotiated, all packets that have invalid checksums are considered corrupt.
